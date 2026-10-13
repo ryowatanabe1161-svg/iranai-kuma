@@ -53,7 +53,8 @@
   }
   function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
   function cleanName(n) { return String(n || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 8); }
-  function genCode() { var c = ''; for (var i = 0; i < 4; i++) c += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]; return c; }
+  var PARTY = window.FuuParty && window.FuuParty.info;   // ひろばの「みんなの部屋」から来たとき
+  function genCode() { if (PARTY && PARTY.host) return PARTY.code; var c = ''; for (var i = 0; i < 4; i++) c += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]; return c; }
   function normCode(c) { return String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/O/g, '0').replace(/I/g, '1').slice(0, 4); }
   function inviteUrl(code) {
     var u = location.origin + location.pathname + '?room=' + code;
@@ -125,7 +126,7 @@
     peer.on('error', function (e) {
       if (e.type === 'unavailable-id') {
         try { peer.destroy(); } catch (x) {}
-        if (!host.opened && R.phase === 'lobby' && !host.resuming) { R.code = genCode(); openHostPeer(); return; }
+        if (!host.opened && R.phase === 'lobby' && !host.resuming && !PARTY) { R.code = genCode(); openHostPeer(); return; }
         // 再開時：古い接続がサーバーから消えるまで少し待って同じIDで再試行
         if (++host.tries > 25) { connecting(false); toast('部屋を再開できませんでした'); return; }
         connecting(true, '部屋を再開しています…', '少し時間がかかることがあります（' + host.tries + '）');
@@ -444,6 +445,7 @@
     peer.on('disconnected', function () { if (!peer.destroyed) setTimeout(function () { try { peer.reconnect(); } catch (e) {} }, 2000); });
     peer.on('error', function (e) {
       if (e.type === 'peer-unavailable') {
+        if (PARTY && !client.everJoined && (client.ptries = (client.ptries || 0) + 1) < FuuParty.retries) { connecting(true, 'ホストを待っています…', '部屋 ' + client.code); setTimeout(clientConnect, FuuParty.retryMs); return; }
         if (!client.everJoined) { connecting(false); toast('部屋が見つかりません。コードを確認してください。'); leaveClient(false); }
         // 参加後はホスト側の一時的な不在 → 再接続ループに任せる
         else clientLost();
@@ -482,6 +484,8 @@
       actSent = -1;
       connecting(false); banner('');
       sstore(SS_CLIENT, { code: client.code, name: client.name });
+    } else if (m.t === 'fuu-goto') {
+      if (PARTY) { sstore(SS_CLIENT, null); FuuParty.handle(m); }
     } else if (m.t === 'state') {
       received.push(m); if (received.length > 3000) received.shift();
       render(m);
@@ -827,4 +831,16 @@
     sendRaw: function (m) { if (client && client.conn) client.conn.send(m); }
   };
   renderTitle();
+  // ---- ひろばの「みんなの部屋」：同じメンバーで自動入室＋ホストは「つぎのゲーム」 ----
+  if (PARTY) {
+    FuuParty.init({ game: 'nothanks-online',
+      isHost: function () { return !!host; },
+      canSwitch: function () { return !host || host.room.phase !== 'playing' || !!(host.room.G && host.room.G.over); },
+      broadcast: function (m) { if (host) Object.keys(host.conns).forEach(function (cid) { try { host.conns[cid].send(m); } catch (e) {} }); } });
+    $('nameIn').value = cleanName(PARTY.name) || 'ななし';
+    setTimeout(function () {
+      if (PARTY.host) { store(LS_HOST, null); startHost(cleanName(PARTY.name) || 'ホスト', null); }
+      else startClient(PARTY.code, cleanName(PARTY.name) || 'ななし');
+    }, 50);
+  }
 })();
