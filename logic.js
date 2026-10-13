@@ -1,4 +1,4 @@
-/* ノーサンキュー！ ゲームロジック（オフライン版と共通・UI非依存） */
+/* いらないクマ！ ゲームロジック（オフライン版と共通・UI非依存） */
 var Geschenk = (function () {
   'use strict';
   var MIN_CARD = 3, MAX_CARD = 35, REMOVED = 9;

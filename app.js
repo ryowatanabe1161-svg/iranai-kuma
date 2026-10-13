@@ -1,4 +1,4 @@
-/* ノーサンキュー！ オンライン版
+/* いらないクマ！ オンライン版
  * 構成：WebRTC（PeerJS）による P2P。ホストのブラウザが唯一の正（authoritative）で、
  * 山札・全員のチップ・CPU（ふーさん🐻）の判断をすべてホスト側で処理します。
  * 各プレイヤーには「その人に見せてよい情報だけ」を送ります（他人のチップ枚数・山札の中身は送らない）。
@@ -25,7 +25,7 @@
     takeRun: ['つながったクマ〜！', 'ちょうど欲しかったクマ！', '連番だクマ！'],
     takeForced: ['チップがないクマ…', 'しかたないクマ…'],
     takeBig: ['チップがいっぱいクマ！', 'がっぽりクマ〜！'],
-    pass: ['パスだクマ〜', 'いらないクマ…', 'チップ置いとくクマ', 'ノーサンキューだクマ！', 'うーん、パスクマ']
+    pass: ['パスだクマ〜', 'いらないクマ…', 'チップ置いとくクマ', 'いらないクマ！', 'うーん、パスクマ']
   };
   var HB_MS = 3000, LOST_MS = 10000;
   var LS_ID = 'nt-online-client-id', LS_NAME = 'nt-online-name', LS_HOST = 'nt-online-host-room', SS_CLIENT = 'nt-online-joined';
@@ -834,7 +834,7 @@
   renderTitle();
   // ---- ひろばの「みんなの部屋」：同じメンバーで自動入室＋ホストは「つぎのゲーム」 ----
   if (PARTY) {
-    FuuParty.init({ game: 'nothanks-online',
+    FuuParty.init({ game: 'iranai-kuma',
       isHost: function () { return !!host; },
       canSwitch: function () { return !host || host.room.phase !== 'playing' || !!(host.room.G && host.room.G.over); },
       broadcast: function (m) { if (host) Object.keys(host.conns).forEach(function (cid) { try { host.conns[cid].send(m); } catch (e) {} }); } });
