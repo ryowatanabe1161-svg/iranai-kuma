@@ -838,6 +838,7 @@
       isHost: function () { return !!host; },
       canSwitch: function () { return !host || host.room.phase !== 'playing' || !!(host.room.G && host.room.G.over); },
       broadcast: function (m) { if (host) Object.keys(host.conns).forEach(function (cid) { try { host.conns[cid].send(m); } catch (e) {} }); } });
+    FuuParty.status = function () { return host ? { host: 1, n: Object.keys(host.conns).filter(function (k) { return host.conns[k].open; }).length } : { host: 0, joined: !!(client && client.everJoined) }; };
     $('nameIn').value = cleanName(PARTY.name) || 'ななし';
     setTimeout(function () {
       if (PARTY.host) { store(LS_HOST, null); startHost(cleanName(PARTY.name) || 'ホスト', null); }
